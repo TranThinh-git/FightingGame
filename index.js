@@ -9,18 +9,28 @@ c.fillRect(0, 0, canvas.width, canvas.height)
 const gravity = 0.2
 
 class Sprite {
-    constructor({position, velocity}) {
+    constructor({position, velocity, color = 'red'}) {
         this.position = position
         this.velocity = velocity
         this.height = 150
         this.width = 50
         this.lastKey
+        this.color = color
         this.inAir = false
+        this.attackBox = {
+            position: this.position,
+            width: 100,
+            height: 50
+        }
     }
 
     draw() {
-        c.fillStyle = 'red'
+        c.fillStyle = this.color
         c.fillRect(this.position.x, this.position.y, this.width, this.height)
+
+        //attack box
+        c.fillStyle = 'green'
+        c.fillRect(this.attackBox.position.x, this.attackBox.position.y, this.attackBox.width, this.attackBox.height)
     }
 
     change() {
@@ -51,7 +61,8 @@ const player1 = new Sprite({
     velocity: {
         x: 0,
         y: 0
-    }
+    },
+    color: 'blue'
 })
 
 const player2 = new Sprite({
@@ -107,7 +118,7 @@ window.addEventListener('keydown' , (event) => {
             player2.lastKey = 'ArrowLeft'
             break
         case 'ArrowUp' :
-            player2.velocity.y = -10
+            player2.jump()
             break
     }
 })
@@ -152,6 +163,8 @@ function animate() {
     } else if(keys.ArrowRight.pressed && player2.lastKey === 'ArrowRight' && player2.position.x + player2.width <= canvas.width ) {
         player2.velocity.x = 5
     }
+
+    //detect for collision
 
 }
 
