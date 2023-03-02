@@ -13,11 +13,14 @@ class Sprite {
         this.position = position
         this.velocity = velocity
         this.height = 150
+        this.width = 50
+        this.lastKey
+        this.inAir = false
     }
 
     draw() {
         c.fillStyle = 'red'
-        c.fillRect(this.position.x, this.position.y, 50, this.height)
+        c.fillRect(this.position.x, this.position.y, this.width, this.height)
     }
 
     change() {
@@ -26,8 +29,18 @@ class Sprite {
         this.position.y += this.velocity.y
         if(this.position.y + this.height + this.velocity.y >= canvas.height) {
             this.velocity.y = 0
-        } 
-        else this.velocity.y += gravity
+            this.inAir = false
+        }
+        else {
+            this.velocity.y += gravity
+            this.inAir = true
+        }
+    }
+    jump() {
+        if(!this.inAir) {
+            this.velocity.y = -10
+            this.inAir = true
+        }
     }
 }
 const player1 = new Sprite({
@@ -52,13 +65,17 @@ const player2 = new Sprite({
     }
 })
 
-let lastKey
-
 const keys = {
     a: {
         pressed : false
     },
     d: {
+        pressed : false
+    },
+    ArrowRight: {
+        pressed : false
+    },
+    ArrowLeft: {
         pressed : false
     }
 }
@@ -67,19 +84,32 @@ const keys = {
 
 window.addEventListener('keydown' , (event) => {
     switch (event.key) {
+        //player 1 keys
         case 'd' :
             keys.d.pressed = true
-            lastKey = 'd'
+            player1.lastKey = 'd'
             break
         case 'a' :
             keys.a.pressed = true
-            lastKey = 'a'
+            player1.lastKey = 'a'
             break
         case 'w' :
-            player1.velocity.y = -10
+            player1.jump()
+            break
+
+        //player 2 keys
+        case 'ArrowRight' :
+            keys.ArrowRight.pressed = true
+            player2.lastKey = 'ArrowRight'
+            break
+        case 'ArrowLeft' :
+            keys.ArrowLeft.pressed = true
+            player2.lastKey = 'ArrowLeft'
+            break
+        case 'ArrowUp' :
+            player2.velocity.y = -10
             break
     }
-    // console.log(event.key)
 })
 
 window.addEventListener('keyup' , (event) => {
@@ -90,8 +120,14 @@ window.addEventListener('keyup' , (event) => {
         case 'a' :
             keys.a.pressed = false
             break
+
+        case 'ArrowRight' :
+            keys.ArrowRight.pressed = false
+            break
+        case 'ArrowLeft' :
+            keys.ArrowLeft.pressed = false
+            break
     }
-    // console.log(event.key)
 })
 
 function animate() {
@@ -102,10 +138,19 @@ function animate() {
     player2.change()
     
     player1.velocity.x = 0
-    if(keys.a.pressed && lastKey === 'a') {
-        player1.velocity.x = -1
-    } else if(keys.d.pressed && lastKey === 'd') {
-        player1.velocity.x = 1
+    player2.velocity.x = 0
+    //player 1 movements
+    if(keys.a.pressed && player1.lastKey === 'a' && player1.position.x >= 0 ) {
+        player1.velocity.x = -5
+    } else if(keys.d.pressed && player1.lastKey === 'd' && player1.position.x + player1.width <= canvas.width) {
+        player1.velocity.x = 5
+    }
+
+    //player 2 movements
+    if(keys.ArrowLeft.pressed && player2.lastKey === 'ArrowLeft' && player2.position.x >= 0 ) {
+        player2.velocity.x = -5
+    } else if(keys.ArrowRight.pressed && player2.lastKey === 'ArrowRight' && player2.position.x + player2.width <= canvas.width ) {
+        player2.velocity.x = 5
     }
 
 }
