@@ -6,10 +6,10 @@ canvas.height = 576
 
 c.fillRect(0, 0, canvas.width, canvas.height)
 
-const gravity = 0.2
+const gravity = 0.6
 
 class Sprite {
-    constructor({position, velocity, color = 'red'}) {
+    constructor({position, velocity, color = 'red', offset}) {
         this.position = position
         this.velocity = velocity
         this.height = 150
@@ -18,10 +18,16 @@ class Sprite {
         this.color = color
         this.inAir = false
         this.attackBox = {
-            position: this.position,
+            position:{
+                x: this.position.x,
+                y: this.position.y
+            } ,
+            offset,
             width: 100,
             height: 50
         }
+        this.isAttacking
+        this.health = 100
     }
 
     draw() {
@@ -29,12 +35,18 @@ class Sprite {
         c.fillRect(this.position.x, this.position.y, this.width, this.height)
 
         //attack box
-        c.fillStyle = 'green'
-        c.fillRect(this.attackBox.position.x, this.attackBox.position.y, this.attackBox.width, this.attackBox.height)
+        if(this.isAttacking){
+            c.fillStyle = 'green'
+            c.fillRect(this.attackBox.position.x, this.attackBox.position.y, this.attackBox.width, this.attackBox.height)
+        }
     }
 
     change() {
         this.draw()
+
+        this.attackBox.position.x = this.position.x + this.attackBox.offset.x
+        this.attackBox.position.y = this.position.y
+
         this.position.x += this.velocity.x
         this.position.y += this.velocity.y
         if(this.position.y + this.height + this.velocity.y >= canvas.height) {
@@ -48,15 +60,26 @@ class Sprite {
     }
     jump() {
         if(!this.inAir) {
-            this.velocity.y = -10
+            this.velocity.y = -15
             this.inAir = true
         }
+    }
+
+    attack(delay = 500) {
+        this.isAttacking = true
+        setTimeout(() => {
+            this.isAttacking = false
+        }, delay);
     }
 }
 const player1 = new Sprite({
     position: {
         x : 0,
         y : 0
+    },
+    offset: {
+        x: 0,
+        y: 0
     },
     velocity: {
         x: 0,
@@ -69,6 +92,10 @@ const player2 = new Sprite({
     position: {
         x : 400,
         y : 100
+    },
+    offset: {
+        x: -50,
+        y: 0
     },
     velocity: {
         x: 0,
@@ -107,7 +134,9 @@ window.addEventListener('keydown' , (event) => {
         case 'w' :
             player1.jump()
             break
-
+        case ' ' :
+            player1.attack()
+            break
         //player 2 keys
         case 'ArrowRight' :
             keys.ArrowRight.pressed = true
@@ -120,6 +149,8 @@ window.addEventListener('keydown' , (event) => {
         case 'ArrowUp' :
             player2.jump()
             break
+        case 'ArrowDown' :
+            player2.attack()
     }
 })
 
@@ -140,6 +171,24 @@ window.addEventListener('keyup' , (event) => {
             break
     }
 })
+
+function collision({rectangle1, rectangle2}) {
+    return ( rectangle1.attackBox.position.x + rectangle1.attackBox.width >= rectangle2.position.x &&
+        rectangle1.attackBox.position.x <= rectangle2.position.x + rectangle2.width &&
+        rectangle1.attackBox.position.y + rectangle1.attackBox.height >= rectangle2.position.y &&
+        rectangle1.attackBox.position.y <= rectangle2.position.y + rectangle2.height)
+}
+
+let timer = 10
+function decreaseTimer() {
+    if(timer > 0) {
+        setTimeout(decreaseTimer, 1000)
+        timer --
+        document.querySelector('#timer').innerHTML = timer
+    }
+}
+
+decreaseTimer()
 
 function animate() {
     window.requestAnimationFrame(animate)
@@ -165,6 +214,17 @@ function animate() {
     }
 
     //detect for collision
+    if( collision({rectangle1: player1, rectangle2: player2}) && player1.isAttacking) {
+            player1.isAttacking = false
+            player2.health -= 20
+            document.querySelector('#player2Health').style.width = player2.health + '%'
+    }
+
+    if( collision({rectangle1: player2, rectangle2: player1}) && player2.isAttacking) {
+        player2.isAttacking = false
+        player1.health -= 20
+        document.querySelector('#player1Health').style.width = player1.health + '%'
+}
 
 }
 
